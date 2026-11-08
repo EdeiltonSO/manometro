@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simulador de manômetro em U</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light;
+--bg:#eef2ef;--panel:#fff;--ink:#1c2b2e;--mut:#5b6c6f;--line:#cdd8d5;--acc:#0e6b68;--accfg:#fff;--tube:#f7fbfc;--glass:#aebfc4;--ruler:#f1e7c3;--tick:#6b5d2a;--warn:#b3412c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#111a1c;--panel:#1a2527;--ink:#e4eded;--mut:#9fb2b4;--line:#33464a;--acc:#5cc2bd;--accfg:#0b1a1b;--tube:#18272a;--glass:#48626a;--ruler:#3a3624;--tick:#d8c98a;--warn:#f08a74}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#111a1c;--panel:#1a2527;--ink:#e4eded;--mut:#9fb2b4;--line:#33464a;--acc:#5cc2bd;--accfg:#0b1a1b;--tube:#18272a;--glass:#48626a;--ruler:#3a3624;--tick:#d8c98a;--warn:#f08a74}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:620px;margin:0 auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+section{display:contents}
+h1{font-size:1.4rem;margin:0;order:1}
+.sub{margin:0 0 12px;color:var(--mut);font-size:.9rem}
+.bench,.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.bench{padding:8px;order:3}
+.credits{order:5;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.credits h2{font-size:.95rem;margin:0 0 8px}
+.credits p{margin:0 0 4px}
+.credits ul{margin:0;padding-left:20px}
+.readings{order:4}
+svg{display:block;width:100%;height:auto;max-height:80vh}
+svg text{fill:var(--ink);font:12px system-ui,sans-serif}
+svg .mut{fill:var(--mut);font-size:11px}
+.panel{padding:14px;display:flex;flex-direction:column;gap:14px;order:2}
+fieldset{border:0;margin:0;padding:0}
+legend,.lab{font-weight:600;font-size:.9rem;padding:0;margin-bottom:6px}
+.row{display:flex;gap:8px;align-items:center}
+input[type=range]{flex:1;accent-color:var(--acc)}
+input[type=number]{width:84px;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+button{font:inherit;font-size:.9rem;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);cursor:pointer}
+button[aria-pressed=true]{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+dl{display:grid;grid-template-columns:1fr auto;gap:3px 10px;margin:0;font-size:.92rem}
+dt{color:var(--mut)}dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.eq{font-size:.9rem;padding:8px;border-radius:6px;background:var(--bg);font-variant-numeric:tabular-nums}
+.msg{font-size:.85rem;color:var(--warn);margin:0}
+.msg:empty{display:none}
+@media (max-width:780px){main{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+<section>
+  <h1>Manômetro em U</h1>
+  <div class="bench"><svg id="sv" viewBox="0 0 560 580" role="img" aria-label="Tubo em U com líquido, régua e seringa"></svg></div>
+  <div class="panel readings">
+    <div class="lab">Leituras</div>
+    <dl id="out"></dl>
+  </div>
+  <div class="credits">
+    <h2>Universidade Federal do Vale do São Francisco</h2>
+    <p>Componentes do projeto:</p>
+    <ul>
+      <li>Ana Sofia de Matos Lima</li>
+      <li>Diogo Gomes Ramos</li>
+      <li>Edeilton da Silva de Oliveira</li>
+      <li>Lucas Marques de Araújo</li>
+    </ul>
+  </div>
+</section>
+<aside class="panel">
+  <fieldset>
+    <legend>Pressão manométrica aplicada (kPa)</legend>
+    <div class="row"><input id="rp" type="range" min="-3" max="3" step="0.05" value="0" aria-label="Pressão em kPa"><input id="np" type="number" min="-3" max="3" step="0.05" value="0" aria-label="Pressão em kPa"><div class="btns" id="qb" style="margin:0"></div></div>
+    
+  </fieldset>
+  <fieldset>
+    <legend>Líquido</legend>
+    <div class="row" style="flex-wrap:wrap"><div class="btns" id="fb" style="margin:0"></div>
+    <div class="row" id="orow" style="flex:1;min-width:220px"><label for="ro" style="white-space:nowrap"><span id="vo"></span> kg/m³</label><input id="ro" type="range" min="700" max="950" step="5" value="850"></div></div>
+  </fieldset>
+  <div class="eq" id="eq"></div>
+  <p class="msg" id="msg"></p>
+</aside>
+</main>
+<script>
+const F={
+  agua:{n:'Água',r:1000,c:'#2f86d6',o:.85,s:.072,t:0},
+  oleo:{n:'Óleo',r:850,c:'#e8c21a',o:.9,s:.032,t:0}
+};
+const g=9.81, st={p:0,f:'agua',d:10};
+let K, cur=0, raf;
+const $=id=>document.getElementById(id);
+const fx=(v,n=2)=>v.toFixed(n).replace('.',',');
+
+// Controles
+[[0,'Zerar']].forEach(([v,t])=>{
+  const b=document.createElement('button');b.textContent=t;b.onclick=()=>{st.p=v;upd()};$('qb').appendChild(b);
+});
+Object.keys(F).forEach(k=>{
+  const b=document.createElement('button');b.dataset.k=k;
+  b.innerHTML='<span class="sw" style="background:'+F[k].c+'"></span>'+F[k].n;
+  b.onclick=()=>{st.f=k;upd()};$('fb').appendChild(b);
+});
+$('ro').oninput=e=>{F.oleo.r=+e.target.value;upd()};
+$('rp').oninput=e=>{st.p=+e.target.value;upd()};
+$('np').onchange=e=>{st.p=Math.max(-3,Math.min(3,+e.target.value||0));upd()};
+
+// Física: Δp = ρ·g·Δh
+function calc(){
+  const f=F[st.f], bb=0, lim=36;
+  const raw=st.p*1000/(f.r*g)*100;                       // cm
+  const dh=Math.max(-lim,Math.min(lim,raw));
+  const cap=2*f.s*Math.cos(f.t*Math.PI/180)/(f.r*g*(st.d/2000))*100; // cm (+ sobe, − desce)
+  return {f,bb,lim,raw,dh,cap};
+}
+
+function upd(){
+  K=calc();
+  $('rp').value=st.p;$('np').value=st.p;
+  document.querySelectorAll('#fb button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===st.f));
+  $('orow').style.display=st.f==='oleo'?'flex':'none';$('vo').textContent=F.oleo.r;
+  const {f,bb,dh,cap}=K;
+  const h1=20-dh/2+cap, h2=20+dh/2+bb+cap, dr=h2-h1;
+  const pr=f.r*g*dr/100/1000, pe=f.r*g*dh/100/1000;
+  $('out').innerHTML=
+   '<dt>h₁ (ramo esquerdo)</dt><dd>'+fx(h1)+' cm</dd>'+
+   '<dt>h₂ (ramo direito)</dt><dd>'+fx(h2)+' cm</dd>'+
+   '<dt>Δh = h₂ − h₁</dt><dd>'+fx(dr)+' cm</dd>'+
+   '<dt>Pressão aplicada</dt><dd>'+fx(st.p)+' kPa</dd>'+
+   '<dt>Pressão lida (ρ·g·Δh)</dt><dd>'+fx(pr)+' kPa</dd>'+
+   '<dt>Capilaridade (ambos os ramos)</dt><dd>'+(cap>=0?'+':'−')+fx(Math.abs(cap)*10,1)+' mm</dd>';
+  $('eq').textContent='Δp = ρ·g·Δh  →  '+f.r+' × 9,81 × '+fx(dr/100,3)+' m = '+fx(pr)+' kPa';
+  let m='';
+  if(Math.abs(K.raw)>K.lim+.001)m='Fora de escala: o tubo comporta Δh de no máximo '+fx(K.lim,0)+' cm. Reduza a pressão.';
+  $('msg').textContent=m;
+  cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
+}
+function loop(){
+  const t=K.dh;cur+=(t-cur)*.18;if(Math.abs(t-cur)<.005)cur=t;
+  draw(cur);if(cur!==t)raf=requestAnimationFrame(loop);
+}
+
+// Desenho
+function draw(dh){
+  const {f,bb,cap}=K, w=st.d*2.2, xl=170, xr=370, yv=h=>450-h*10;
+  const hl=20-dh/2+cap, hr=20+dh/2+bb+cap, yl=yv(hl), yr=yv(hr);
+  const convex=f.t>90, m=w*.22;
+  const cl=yl+(convex?m:0), cr=yr+(convex?m:0);
+  const D='M'+xl+',40V450A100,100 0 0 0 '+xr+',450V40';
+  const men=(cx,y)=>convex
+    ?'<path d="M'+(cx-w/2)+','+y+'Q'+cx+','+(y-2*m)+' '+(cx+w/2)+','+y+'Z" fill="'+f.c+'" fill-opacity="'+f.o+'"/>'
+    :'<path d="M'+(cx-w/2)+','+(y-m)+'Q'+cx+','+(y+m)+' '+(cx+w/2)+','+(y-m)+'L'+(cx+w/2)+','+y+'L'+(cx-w/2)+','+y+'Z" fill="'+f.c+'" fill-opacity="'+f.o+'"/>';
+  const px=76+st.p/3*34;
+  let s='<defs><clipPath id="cp"><path d="M0,'+cl+'H270V'+cr+'H560V600H0Z"/></clipPath></defs>';
+  // seringa
+  s+='<path d="M122,32H'+xl+'V44" fill="none" stroke="var(--glass)" stroke-width="8"/><path d="M122,32H'+xl+'V44" fill="none" stroke="var(--tube)" stroke-width="4"/>';
+  s+='<rect x="30" y="20" width="92" height="24" rx="3" fill="var(--tube)" stroke="var(--glass)" stroke-width="2"/>';
+  s+='<line x1="8" y1="32" x2="'+px+'" y2="32" stroke="var(--acc)" stroke-width="4"/><rect x="4" y="23" width="5" height="18" fill="var(--acc)"/><rect x="'+px+'" y="22" width="6" height="20" fill="var(--acc)"/>';
+  s+='<text x="75" y="62" text-anchor="middle" class="mut">seringa</text>';
+  s+='<text x="'+xr+'" y="16" text-anchor="middle" class="mut">ramo aberto (p atm)</text><path d="M'+xr+',22V36m-4,-4l4,4l4,-4" fill="none" stroke="var(--mut)" stroke-width="1.5"/>';
+  // tubo
+  s+='<path d="'+D+'" fill="none" stroke="var(--glass)" stroke-width="'+(w+8)+'"/><path d="'+D+'" fill="none" stroke="var(--tube)" stroke-width="'+w+'"/>';
+  s+='<g clip-path="url(#cp)"><path d="'+D+'" fill="none" stroke="'+f.c+'" stroke-opacity="'+f.o+'" stroke-width="'+w+'"/></g>';
+  s+=men(xl,cl)+men(xr,cr);
+  // régua
+  s+='<rect x="246" y="50" width="48" height="400" fill="var(--ruler)" stroke="var(--tick)" stroke-opacity=".5"/>';
+  for(let i=0;i<=80;i++){
+    const y=450-i*5,L=i%10==0?14:i%2==0?9:5;
+    s+='<path d="M246,'+y+'h'+L+'M294,'+y+'h-'+L+'" stroke="var(--tick)" stroke-width="1"/>';
+    if(i%10==0)s+='<text x="270" y="'+(y+4)+'" text-anchor="middle" style="font-size:10px">'+(i/2)+'</text>';
+  }
+  s+='<text x="270" y="44" text-anchor="middle" class="mut">cm</text>';
+  // linhas de referência e Δh
+  s+='<g stroke="var(--acc)" stroke-width="1.2" stroke-dasharray="5 4"><line x1="100" x2="505" y1="'+yl+'" y2="'+yl+'"/><line x1="100" x2="505" y1="'+yr+'" y2="'+yr+'"/></g>';
+  s+='<line x1="520" x2="520" y1="'+yl+'" y2="'+yr+'" stroke="var(--acc)" stroke-width="2"/><path d="M514,'+yl+'h12M514,'+yr+'h12" stroke="var(--acc)" stroke-width="2"/>';
+  s+='<text x="528" y="'+((yl+yr)/2+4)+'" style="fill:var(--acc);font-weight:600">Δh</text>';
+  s+='<text x="130" y="'+(yl-6)+'" text-anchor="end">h₁ = '+fx(hl)+' cm</text><text x="404" y="'+(yr-6)+'">h₂ = '+fx(hr)+' cm</text>';
+  $('sv').innerHTML=s;
+}
+cur=0;upd();
+</script>
+</body>
+</html>
